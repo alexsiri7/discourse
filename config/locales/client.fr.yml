@@ -686,7 +686,6 @@ fr:
         delete: "Supprimer ce message"
         undelete: "Annuler la suppression de ce message"
         share: "Partager un lien vers ce message"
-        bookmark: "Ajouter ce message à ma page utilisateur"
         more: "Plus"
 
       actions:
@@ -994,7 +993,7 @@ fr:
         delete_confirm: "Supprimer cette personnalisation"
         about: "Vous pouvez modifier les feuillets de styles et en-têtes de votre site. Choisissez ou ajouter un style pour commencer l'édition."
 
-      email_logs:
+      email:
         title: "Historique des mails"
         sent_at: "Envoyer à"
         email_type: "Type d'email"

@@ -15,6 +15,7 @@ Discourse.ListController = Discourse.Controller.extend({
   availableNavItems: function() {
     var summary = this.get('filterSummary');
     var loggedOn = !!Discourse.User.current();
+
     return Discourse.SiteSettings.top_menu.split("|").map(function(i) {
       return Discourse.NavItem.fromText(i, {
         loggedOn: loggedOn
@@ -104,7 +105,7 @@ Discourse.ListController = Discourse.Controller.extend({
   canEditCategory: function() {
     if( this.present('category') ) {
       var u = Discourse.User.current();
-      return u && u.admin;
+      return u && u.staff;
     } else {
       return false;
     }

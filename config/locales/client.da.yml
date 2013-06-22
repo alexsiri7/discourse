@@ -553,7 +553,6 @@ da:
         delete: "slet dette indlæg"
         undelete: "annulér sletning"
         share: "del et link til dette indlæg"
-        bookmark: "bogmærk dette indlæg til din brugerside"
         more: "Mere"
 
       actions:
@@ -734,7 +733,7 @@ da:
         delete: "Delete"
         delete_confirm: "Delete this customization?"
 
-      email_logs:
+      email:
         title: "Email"
         sent_at: "Sent At"
         email_type: "Email Type"

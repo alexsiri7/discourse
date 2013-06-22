@@ -1,11 +1,14 @@
 require 'spec_helper'
-require 'fog'
-require 'imgur'
+require 'digest/sha1'
 
 describe Upload do
 
   it { should belong_to :user }
-  it { should belong_to :topic }
+
+  it { should have_many :post_uploads }
+  it { should have_many :posts }
+
+  it { should have_many :optimized_images }
 
   it { should validate_presence_of :original_filename }
   it { should validate_presence_of :filesize }
@@ -13,7 +16,6 @@ describe Upload do
   context '.create_for' do
 
     let(:user_id) { 1 }
-    let(:topic_id) { 42 }
 
     let(:logo) do
       ActionDispatch::Http::UploadedFile.new({
@@ -23,95 +25,54 @@ describe Upload do
       })
     end
 
-    it "uses imgur when it is enabled" do
-      SiteSetting.stubs(:enable_imgur?).returns(true)
-      Upload.expects(:create_on_imgur).with(user_id, logo, topic_id)
-      Upload.create_for(user_id, logo, topic_id)
-    end
+    let(:upload) { Upload.create_for(user_id, logo) }
 
-    it "uses s3 when it is enabled" do
-      SiteSetting.stubs(:enable_s3_uploads?).returns(true)
-      Upload.expects(:create_on_s3).with(user_id, logo, topic_id)
-      Upload.create_for(user_id, logo, topic_id)
-    end
-
-    it "uses local storage otherwise" do
-      Upload.expects(:create_locally).with(user_id, logo, topic_id)
-      Upload.create_for(user_id, logo, topic_id)
-    end
+    let(:url) { "http://domain.com" }
 
     shared_examples_for "upload" do
       it "is valid" do
+        upload.user_id.should == user_id
         upload.original_filename.should == logo.original_filename
-        upload.filesize.should == logo.size
+        upload.filesize.should == File.size(logo.tempfile)
+        upload.sha1.should == Digest::SHA1.file(logo.tempfile).hexdigest
         upload.width.should == 244
         upload.height.should == 66
+        upload.url.should == url
       end
     end
 
-    context 'imgur' do
-
+    context "s3" do
       before(:each) do
-        # Stub out Imgur entirely as it already is tested.
-        Imgur.stubs(:upload_file).returns({
-          url: "imgurlink",
-          filesize: logo.size,
-          width: 244,
-          height: 66
-        })
+        SiteSetting.stubs(:enable_s3_uploads?).returns(true)
+        S3.stubs(:store_file).returns(url)
       end
-
-      let(:upload) { Upload.create_on_imgur(user_id, logo, topic_id) }
 
       it_behaves_like "upload"
-
-      it "works" do
-        upload.url.should == "imgurlink"
-      end
 
     end
 
-    context 's3' do
-
-      before(:each) do 
-        SiteSetting.stubs(:s3_upload_bucket).returns("bucket")
-        Fog.mock!
-      end
-
-      let(:upload) { Upload.create_on_s3(user_id, logo, topic_id) }
-
+    context "locally" do
+      before(:each) { LocalStore.stubs(:store_file).returns(url) }
       it_behaves_like "upload"
-
-      it "works" do
-        upload.url.should == "//bucket.s3-us-west-1.amazonaws.com/e8b1353813a7d091231f9a27f03566f123463fc1.png"
-      end
-
-      after(:each) do
-        Fog.unmock!
-      end
-
     end
 
-    context 'local' do
+  end
 
-      before(:each) do
-        # prevent the tests from creating directories & files...
-        FileUtils.stubs(:mkdir_p)
-        File.stubs(:open)
-      end
+  context 'has_been_uploaded?' do
 
-      let(:upload) do
-        # The Time needs to be frozen as it is used to generate a clean & unique name
-        Time.stubs(:now).returns(Time.utc(2013, 2, 17, 12, 0, 0, 0))
-        Upload.create_locally(user_id, logo, topic_id)
-      end
+    it "identifies internal or relatives urls" do
+      Discourse.expects(:base_url_no_prefix).returns("http://discuss.site.com")
+      Upload.has_been_uploaded?("http://discuss.site.com/upload/1234/42/0123456789ABCDEF.jpg").should == true
+      Upload.has_been_uploaded?("/upload/42/0123456789ABCDEF.jpg").should == true
+    end
 
-      it_behaves_like "upload"
+    it "identifies internal urls when using a CDN" do
+      ActionController::Base.expects(:asset_host).returns("http://my.cdn.com").twice
+      Upload.has_been_uploaded?("http://my.cdn.com/upload/1234/42/0123456789ABCDEF.jpg").should == true
+    end
 
-      it "works" do
-        upload.url.should match /\/uploads\/default\/[\d]+\/253dc8edf9d4ada1.png/
-      end
-
+    it "identifies external urls" do
+      Upload.has_been_uploaded?("http://domain.com/upload/1234/42/0123456789ABCDEF.jpg").should == false
     end
 
   end

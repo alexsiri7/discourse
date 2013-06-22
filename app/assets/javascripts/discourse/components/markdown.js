@@ -122,7 +122,8 @@ Discourse.Markdown = {
     });
 
     // newline prediction in trivial cases
-    if (!Discourse.SiteSettings.traditional_markdown_linebreaks) {
+    var linebreaks = opts.traditional_markdown_linebreaks || Discourse.SiteSettings.traditional_markdown_linebreaks;
+    if (!linebreaks) {
       converter.hooks.chain("preConversion", function(text) {
         return text.replace(/(^[\w<][^\n]*\n+)/gim, function(t) {
           if (t.match(/\n{2}/gim)) return t;
@@ -166,7 +167,7 @@ Discourse.Markdown = {
         if (Discourse && Discourse.Onebox) {
           onebox = Discourse.Onebox.lookupCache(url);
         }
-        if (onebox && !onebox.isBlank()) {
+        if (onebox && onebox.trim().length > 0) {
           return arguments[2] + onebox;
         } else {
           return arguments[2] + arguments[4] + " class=\"onebox\" target=\"_blank\">" + arguments[6];

@@ -9,6 +9,13 @@
 **/
 Discourse.InvitePrivateController = Discourse.ObjectController.extend(Discourse.ModalFunctionality, {
 
+  modalClass: 'invite',
+
+  onShow: function(){
+    this.set('controllers.modal.modalClass', 'invite-modal');
+    this.set('emailOrUsername', '');
+  },
+
   disabled: function() {
     if (this.get('saving')) return true;
     return this.blank('emailOrUsername');
@@ -20,14 +27,21 @@ Discourse.InvitePrivateController = Discourse.ObjectController.extend(Discourse.
   }.property('saving'),
 
   invite: function() {
+
+    if (this.get('disabled')) return;
+
     var invitePrivateController = this;
     this.set('saving', true);
     this.set('error', false);
     // Invite the user to the private message
-    this.get('content').inviteUser(this.get('emailOrUsername')).then(function() {
+    this.get('content').inviteUser(this.get('emailOrUsername')).then(function(result) {
       // Success
       invitePrivateController.set('saving', false);
       invitePrivateController.set('finished', true);
+
+      if(result && result.user) {
+        invitePrivateController.get('content.allowed_users').pushObject(result.user);
+      }
     }, function() {
       // Failure
       invitePrivateController.set('error', true);

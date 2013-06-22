@@ -8,16 +8,5 @@
 **/
 Discourse.InvitePrivateView = Discourse.ModalBodyView.extend({
   templateName: 'modal/invite_private',
-  title: Em.String.i18n('topic.invite_private.title'),
-
-  didInsertElement: function() {
-    this._super();
-    var invitePrivateModalView = this;
-    Em.run.schedule('afterRender', function() {
-      invitePrivateModalView.$('input').focus();
-    });
-  }
-
+  title: Em.String.i18n('topic.invite_private.title')
 });
-
-

@@ -91,15 +91,15 @@ Discourse.BBCode = {
 
     var result = {};
 
-    Object.keys(Discourse.BBCode.replacers, function(name, rules) {
+    _.each(Discourse.BBCode.replacers, function(rules, name) {
 
       var parsed = result[name] = [];
 
-      Object.keys(Object.merge(Discourse.BBCode.replacers.base.withoutArgs, rules.withoutArgs), function(tag, val) {
+      _.each(_.extend(Discourse.BBCode.replacers.base.withoutArgs, rules.withoutArgs), function(val, tag) {
         parsed.push({ regexp: new RegExp("\\[" + tag + "\\]([\\s\\S]*?)\\[\\/" + tag + "\\]", "igm"), fn: val });
       });
 
-      Object.keys(Object.merge(Discourse.BBCode.replacers.base.withArgs, rules.withArgs), function(tag, val) {
+      _.each(_.extend(Discourse.BBCode.replacers.base.withArgs, rules.withArgs), function(val, tag) {
         parsed.push({ regexp: new RegExp("\\[" + tag + "=?(.+?)\\]([\\s\\S]*?)\\[\\/" + tag + "\\]", "igm"), fn: val });
       });
 
@@ -158,7 +158,7 @@ Discourse.BBCode = {
   extractQuotes: function(text) {
     var result = {text: "" + text, replacements: []};
 
-    var replacements = []
+    var replacements = [];
 
     var matches;
     while (matches = Discourse.BBCode.QUOTE_REGEXP.exec(result.text)) {
@@ -172,13 +172,13 @@ Discourse.BBCode = {
     }
 
     result.template = function(input) {
-      replacements.each(function(r) {
+      _.each(replacements,function(r) {
         var val = r.value.trim();
         val = val.replace(r.content, r.content.replace(/\n/g, '<br>'));
         input = input.replace(r.key, val);
       });
       return input;
-    }
+    };
 
     return(result);
   },
@@ -192,21 +192,24 @@ Discourse.BBCode = {
   **/
   formatQuote: function(text, opts) {
     var args, matches, params, paramsSplit, paramsString, templateName, username;
+
+    var splitter = function(p,i) {
+      if (i > 0) {
+        var assignment = p.split(':');
+        if (assignment[0] && assignment[1]) {
+          return params.push({
+            key: assignment[0],
+            value: assignment[1].trim()
+          });
+        }
+      }
+    };
+
     while (matches = this.QUOTE_REGEXP.exec(text)) {
       paramsString = matches[1].replace(/\"/g, '');
       paramsSplit = paramsString.split(/\, */);
       params = [];
-      paramsSplit.each(function(p, i) {
-        if (i > 0) {
-          var assignment = p.split(':');
-          if (assignment[0] && assignment[1]) {
-            return params.push({
-              key: assignment[0],
-              value: assignment[1].trim()
-            });
-          }
-        }
-      });
+      _.each(paramsSplit, splitter);
       username = paramsSplit[0];
 
       // remove leading <br>s

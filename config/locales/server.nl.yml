@@ -52,6 +52,7 @@ nl:
   rss_posts_in_topic: "RSS feed van '%{topic}'"
   rss_topics_in_category: "RSS fees van topics in de categorie '%{category}'"
   author_wrote: "%{author} schreef:"
+  private_message_abbrev: PB
 
   groups:
     default_names:
@@ -62,7 +63,7 @@ nl:
       trust_level_2: "trust_level_2"
       trust_level_3: "trust_level_3"
       trust_level_4: "trust_level_4"
-      trust_level_5: "trust_level_5" 
+      trust_level_5: "trust_level_5"
 
   education:
     until_posts:
@@ -390,7 +391,7 @@ nl:
     contact_email_missing: "Je hebt nog geen contactadres opgegeven voor je site. Werk contact_email bij in de <a href='/admin/site_settings'>Instellingen</a>."
     contact_email_invalid: "Je hebt een ongeldig contactadres opgegeven voor je site. Werk contact_email bij in de <a href='/admin/site_settings'>Instellingen</a>."
     title_nag: "Je hebt nog geen title ingesteld voor je site. Geef een titel voor je site op in de <a href='/admin/site_settings'>Instellingen</a>."
-    gmail_for_email_warning: "Je site is ingesteld om Gmail te gebruiken voor het versturen van mails. <a href='http://support.google.com/a/bin/answer.py?hl=en&answer=166852' target='_blank'>Gmail heeft limieten voor het aantal mails dat je kan versturen</a>. Overweeg om een andere e-mailprovider te gebruiken om er zeker van te zijn dat mails aankomen."
+    consumer_email_warning: "Je site is ingesteld om Gmail te gebruiken voor het versturen van mails. <a href='http://support.google.com/a/bin/answer.py?hl=en&answer=166852' target='_blank'>Gmail heeft limieten voor het aantal mails dat je kan versturen</a>. Overweeg om een andere e-mailprovider te gebruiken om er zeker van te zijn dat mails aankomen."
 
   content_types:
     education_new_reply:
@@ -408,6 +409,11 @@ nl:
     welcome_invite:
       title: "Welkom: Uitgenodigd lid"
       description: "Een privé-bericht dat automatisch naar alle nieuwe leden wordt gestuurd als ze ingaan op de uitnodiging om aan het forum deel te nemen door een ander lid."
+
+    login_required_welcome_message:
+      title: "Inloggen vereist: Welkomstbericht"
+      description: "Welcomstbericht dat getoond wordt aan uitgelogde gebruikers als 'login required' is ingesteld."
+
     tos_user_content_license:
       title: "Algemene voorwaarden: Inhoudslicensie"
       description: "De tekst van de Inhoudslicentie van de Algemene Voorwaarden."
@@ -421,6 +427,7 @@ nl:
     max_post_length: maximum lengte van een bericht in tekens
     min_topic_title_length: minimum lengte van een topic-titel
     max_topic_title_length: maximum lengte van een topic-titel
+    min_private_message_title_length: minimum lengte van de titel van een privebericht in tekens
     min_search_term_length: minimum lengte van een zoekterm in tekens
     allow_uncategorized_topics: Sta topics zonder categorie toe
     allow_duplicate_topic_titles: Sta topics met dezelfde titels toe
@@ -438,10 +445,6 @@ nl:
     queue_jobs: "Zet verschillende taken in een queue binnen sidekiq, bij 'false' worden taken ineens uitgevoerd"
     crawl_images: Zet het ophalen van afbeeldingen van externe bronnen aan
     ninja_edit_window: "Hoe snel je een aanpassing kan maken zonder dat er een nieuwe versie wordt opgeslagen, in seconden."
-    enable_imgur: "Gebruik de imgur API voor uploads en sla afbeeldingen niet lokaal op"
-    imgur_client_id: "Je imgur.com client ID, nodig om afbeeldingen te kunnen uploaden naar imgur" 
-    imgur_client_secret: "Je imgur.com client secret. Is nog niet nodig voor het uploaden van afbeeldingen, maar dat zou in de toekomst kunnen veranderen." 
-    imgur_endpoint: "End point voor het uploaden van imgur.com-afbeeldingen"
     max_image_width: Maximale breedte voor een afbeelding in een bericht
     category_featured_topics: Aantal topics dat wordt weergegeven in de categorielijst
     add_rel_nofollow_to_user_content: "Voeg 'rel nofollow' toe aan alle leden-content behalve voor interne links (inclusief parent domeinen). NB: Als je dit verandert, moet je ook alle 'baked markdown' updaten"
@@ -473,6 +476,8 @@ nl:
 
     flags_required_to_hide_post: "Berichten zullen automatisch worden verborgen zodra het aantal meldingen maximaal dit aantal is (0 voor nooit)"
     cooldown_minutes_after_hiding_posts: "Hoeveel minuten moet iemand wachten voordat zij hun bericht kunnen wijzigen nadat het is verborgen door meldingen"
+    num_flags_to_block_new_user: "Als de berichten van een nieuwe gebruiker dit aantal spammarkeringen krijgen van (n) verschillende gebruikers, verberg dan alle berichten van deze gebruiker en houdt nieuwe berichten tegen. 0 om deze mogelijkheid uit te zetten."
+    num_users_to_block_new_user: "Als de berichten van een nieuwe gebruiker (x) spammarkeringen krijgen van andere gebruikers, verberg dan alle berichten van deze gebruiker en houdt nieuwe berichten tegen. 0 om deze mogelijkheid uit te zetten."
 
     traditional_markdown_linebreaks: "Gebruik traditionele regeleinden in Markdown, gebruik 2 spaties voor een nieuw regeleinde"
     post_undo_action_window_mins: "Het tijdsbestek waarin iemand een actie binnen een bericht kan terugdraaien (zoals 'vind ik leuk')"
@@ -487,7 +492,7 @@ nl:
     posts_per_page: "Hoeveel berichten er worden weergeven op een topic-pagina"
     system_username: "Vanuit welke gebruikersnaam systeemberichten worden verstuurd"
     send_welcome_message: "Krijgen nieuwe leden een welkomst-privé-bericht?"
-    supress_reply_directly_below: "Laat geen reactieknop zien onder een bericht waarbij de reactie direct onder het bericht zal worden gemaakt"
+    suppress_reply_directly_below: "Laat geen reactieknop zien onder een bericht waarbij de reactie direct onder het bericht zal worden gemaakt"
     allow_index_in_robots_txt: "De site zou geïndexeerd mogen worden door zoekmachines (update robots.txt)"
     email_domains_blacklist: "Een lijst met e-maildomeinen gescheiden door een |-teken van domeinen die niet worden toegestaan. Voorbeeld: mailinator.com|trashmail.net"
     email_domains_whitelist: "Een lijst met e-maildomeinen gescheiden door een |-teken van domeinen die wel worden toegestaan. N.B.: als je hier iets opgeeft, zijn andere domeinen NIET toegestaan."
@@ -499,6 +504,8 @@ nl:
     invite_expiry_days: "Hoe lang uitnodigingscodes geldig blijven (in dagen)."
 
     # TODO: perhaps we need a way of protecting these settings for hosted solution, global settings ...
+
+    login_required: Inloggen vereist om berichten te kunnen lezen
 
     enable_local_logins: Zet lokaal inloggen aan
     enable_local_account_create: Zet lokaal account aanmaken aan
@@ -573,8 +580,8 @@ nl:
     email_time_window_mins: "Hoeveel minuten we wachten met het sturen van een e-mail naar een persoon, om ze een kans te geven het eerst op de site te kunnen lezen."
     flush_timings_secs: "Hoe vaak we timing-data naar de server sturen, in seconden."
     max_word_length: "De maximumlengte van een woord in een topictitel"
-    title_min_entropy: "De minimale entropie die een topictitel moet bevatten"
-    body_min_entropy: "De minimale entropie die de inhoud van een post moet bevatten"
+    title_min_entropy: "De minimale entropie (unieke tekens) die een topictitel moet bevatten"
+    body_min_entropy: "De minimale entropie (unieke tekens) die de inhoud van een post moet bevatten"
 
     title_fancy_entities: "Converteer algemene ASCII-tekens naar fancy HTML in topictitels, zoals SmartyPants (http://daringfireball.net/projects/smartypants)"
 
@@ -781,19 +788,6 @@ nl:
 
         - Wanneer je een topic leest, kan je naar boven scrollen (↑) door op de topictitel bovenaan de pagina te klikken. Om de *onderkant* (↓) te bereiken klik je op de pijl naar beneden aan de onderkant van de pagina of je klikt op het Laatste Post-veld in de topicsamenvatting onder het eerste bericht.
 
-    welcome_approved:
-      subject_template: "Je aanmelding voor %{site_name} is goedgekeurd!"
-      text_body_template: |
-        Gefeliciteerd!
-
-        Je aanvraag om lid te worden van %{site_name} is goedgekeurd, welkom op ons discussieforum!
-
-        %{new_user_tips}
-
-        We geloven altijd in [beschaafd gemeenschappelijk gedrag](%{base_url}/faq).
-
-        Geniet van je verblijf!
-
     welcome_user:
       subject_template: "Welkom bij %{site_name}!"
       text_body_template: |
@@ -835,6 +829,26 @@ nl:
     import_succeeded:
       subject_template: Import succesvol uitgevoerd
       text_body_template: De import was succesvol uitgevoerd.
+
+    too_many_spam_flags:
+      subject_template: Account geblokkeerd
+      text_body_template: |
+        Hallo,
+
+        Dit is een automatisch bericht van %{site_name} om je te informeren dat je berichten verborgen zijn omdat ze gemarkeerd zijn door de community.
+
+        Uit voorzorg is je nieuwe account geblokkeerd waardoor je geen berichten meer kan plaatsen tot iemand van de staf je account opnieuw beoordeeld.
+
+        Kijk voor verdere uitleg in de [FAQ](%{base_url}/faq).
+
+    unblocked:
+      subject_template: Account gedeblokkeerd
+      text_body_template: |
+        HAllo,
+
+        Dit is een automatisch bericht van %{site_name} om je te informeren dat je account gedeblokkeerd is.
+
+        Je kunt weer berichten plaatsen
 
   unsubscribe_link: "Mocht je deze e-mails niet langer willen ontvangen, bezoek dan [je gebruikersinstellingen](%{user_preferences_url})."
 
@@ -951,6 +965,11 @@ nl:
     see_more: Meer
     search_title: Zoek deze topic
     search_google: Zoek met Google
+
+  login_required:
+    welcome_message: |
+      #[Welkom op het forum %{title}](#welcome)
+      Leuk dat je interesse hebt in %{title}. Maak een account of log in om verder te gaan.
 
   terms_of_service:
     user_content_license: |
