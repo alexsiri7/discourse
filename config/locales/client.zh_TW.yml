@@ -668,7 +668,6 @@ zh_TW:
         delete: "刪除本帖"
         undelete: "恢複本帖"
         share: "分享一個到本帖的鏈接"
-        bookmark: "給本帖做書簽到你的用戶頁"
         more: "更多"
 
       actions:
@@ -977,7 +976,7 @@ zh_TW:
         delete_confirm: "刪除本定制內容？"
         about: "站點定制允許你修改樣式表和站點頭部。選擇或者添加一個來開始編輯。"
 
-      email_logs:
+      email:
         title: "電子郵件"
         sent_at: "發送時間"
         email_type: "郵件類型"

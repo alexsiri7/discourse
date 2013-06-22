@@ -28,15 +28,16 @@ class UserSerializer < BasicUserSerializer
   end
 
   def bio_excerpt
-    e = object.bio_excerpt
-    unless e && e.length > 0
-      e = if scope.user && scope.user.id == object.id
-        I18n.t('user_profile.no_info_me', username_lower: object.username_lower)
-      else
-        I18n.t('user_profile.no_info_other', name: object.name)
-      end
+    # If they have a bio return it
+    excerpt = object.bio_excerpt
+    return excerpt if excerpt.present?
+
+    # Without a bio, determine what message to show
+    if scope.user && scope.user.id == object.id
+      I18n.t('user_profile.no_info_me', username_lower: object.username_lower)
+    else
+      I18n.t('user_profile.no_info_other', name: object.name)
     end
-    e
   end
 
   private_attributes :email,
@@ -47,6 +48,7 @@ class UserSerializer < BasicUserSerializer
                      :auto_track_topics_after_msecs,
                      :new_topic_duration_minutes,
                      :external_links_in_new_tab,
+                     :dynamic_favicon,
                      :enable_quoting
 
 

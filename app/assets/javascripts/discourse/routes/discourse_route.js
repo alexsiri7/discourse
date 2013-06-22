@@ -24,6 +24,8 @@ Discourse.Route = Em.Route.extend({
     $('header ul.icons li').removeClass('active');
     $('[data-toggle="dropdown"]').parent().removeClass('open');
 
+    Discourse.set('notifyCount',0);
+
     var hideDropDownFunction = $('html').data('hide-dropdown');
     if (hideDropDownFunction) return hideDropDownFunction();
   }
@@ -53,6 +55,9 @@ Discourse.Route.reopenClass({
     if (controller) {
       if (model) {
         controller.set('model', model);
+      }
+      if(controller && controller.onShow) {
+        controller.onShow();
       }
       controller.set('flashMessage', null);
     }

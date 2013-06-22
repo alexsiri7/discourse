@@ -13,7 +13,7 @@ describe TopicsController do
       let(:topic) { p1.topic }
 
       it "raises an error without postIds" do
-        lambda { xhr :post, :move_posts, topic_id: topic.id, title: 'blah' }.should raise_error(Discourse::InvalidParameters)
+        lambda { xhr :post, :move_posts, topic_id: topic.id, title: 'blah' }.should raise_error(ActionController::ParameterMissing)
       end
 
       it "raises an error when the user doesn't have permission to move the posts" do
@@ -106,7 +106,7 @@ describe TopicsController do
       let(:topic) { p1.topic }
 
       it "raises an error without destination_topic_id" do
-        lambda { xhr :post, :merge_topic, topic_id: topic.id }.should raise_error(Discourse::InvalidParameters)
+        lambda { xhr :post, :merge_topic, topic_id: topic.id }.should raise_error(ActionController::ParameterMissing)
       end
 
       it "raises an error when the user doesn't have permission to merge" do
@@ -144,11 +144,11 @@ describe TopicsController do
     let(:raw) { 'this body is long enough to search for' }
 
     it "requires a title" do
-      -> { xhr :get, :similar_to, raw: raw }.should raise_error(Discourse::InvalidParameters)
+      -> { xhr :get, :similar_to, raw: raw }.should raise_error(ActionController::ParameterMissing)
     end
 
     it "requires a raw body" do
-      -> { xhr :get, :similar_to, title: title }.should raise_error(Discourse::InvalidParameters)
+      -> { xhr :get, :similar_to, title: title }.should raise_error(ActionController::ParameterMissing)
     end
 
     it "raises an error if the title length is below the minimum" do
@@ -161,9 +161,40 @@ describe TopicsController do
       -> { xhr :get, :similar_to, title: title, raw: raw }.should raise_error(Discourse::InvalidParameters)
     end
 
-    it "delegates to Topic.similar_to" do
-      Topic.expects(:similar_to).with(title, raw).returns([Fabricate(:topic)])
-      xhr :get, :similar_to, title: title, raw: raw
+    describe "minimum_topics_similar" do
+
+      before do
+        SiteSetting.stubs(:minimum_topics_similar).returns(30)
+      end
+
+      after do
+        xhr :get, :similar_to, title: title, raw: raw
+      end
+
+      describe "With enough topics" do
+        before do
+          Topic.stubs(:count).returns(50)
+        end
+
+        it "deletes to Topic.similar_to if there are more topics than `minimum_topics_similar`" do
+          Topic.expects(:similar_to).with(title, raw, nil).returns([Fabricate(:topic)])
+        end
+
+        describe "with a logged in user" do
+          let(:user) { log_in }
+
+          it "passes a user through if logged in" do
+            Topic.expects(:similar_to).with(title, raw, user).returns([Fabricate(:topic)])
+          end
+        end
+
+      end
+
+      it "does not call Topic.similar_to if there are fewer topics than `minimum_topics_similar`" do
+        Topic.stubs(:count).returns(10)
+        Topic.expects(:similar_to).never
+      end
+
     end
 
   end
@@ -218,11 +249,11 @@ describe TopicsController do
       end
 
       it 'requires the status parameter' do
-        lambda { xhr :put, :status, topic_id: @topic.id, enabled: true }.should raise_error(Discourse::InvalidParameters)
+        lambda { xhr :put, :status, topic_id: @topic.id, enabled: true }.should raise_error(ActionController::ParameterMissing)
       end
 
       it 'requires the enabled parameter' do
-        lambda { xhr :put, :status, topic_id: @topic.id, status: 'visible' }.should raise_error(Discourse::InvalidParameters)
+        lambda { xhr :put, :status, topic_id: @topic.id, status: 'visible' }.should raise_error(ActionController::ParameterMissing)
       end
 
       it 'raises an error with a status not in the whitelist' do
@@ -373,6 +404,33 @@ describe TopicsController do
       response.should be_success
     end
 
+    it 'can find a topic given a slug in the id param' do
+      xhr :get, :show, id: topic.slug
+      expect(response).to redirect_to(topic.relative_url)
+    end
+
+    it 'returns 404 when an invalid slug is given and no id' do
+      xhr :get, :show, id: 'nope-nope'
+      expect(response.status).to eq(404)
+    end
+
+    it 'returns a 404 when slug and topic id do not match a topic' do
+      xhr :get, :show, topic_id: 123123, slug: 'topic-that-is-made-up'
+      expect(response.status).to eq(404)
+    end
+
+    context 'a topic with nil slug exists' do
+      before do
+        @nil_slug_topic = Fabricate(:topic)
+        Topic.connection.execute("update topics set slug=null where id = #{@nil_slug_topic.id}") # can't find a way to set slug column to null using the model
+      end
+
+      it 'returns a 404 when slug and topic id do not match a topic' do
+        xhr :get, :show, topic_id: 123123, slug: 'topic-that-is-made-up'
+        expect(response.status).to eq(404)
+      end
+    end
+
     it 'records a view' do
       lambda { xhr :get, :show, topic_id: topic.id, slug: topic.slug }.should change(View, :count).by(1)
     end
@@ -435,6 +493,25 @@ describe TopicsController do
 
     end
 
+    context "when 'login required' site setting has been enabled" do
+      before { SiteSetting.stubs(:login_required?).returns(true) }
+
+      context 'and the user is logged in' do
+        before { log_in(:coding_horror) }
+
+        it 'shows the topic' do
+          get :show, topic_id: topic.id, slug: topic.slug
+          expect(response).to be_successful
+        end
+      end
+
+      context 'and the user is not logged in' do
+        it 'redirects to the login page' do
+          get :show, topic_id: topic.id, slug: topic.slug
+          expect(response).to redirect_to login_path
+        end
+      end
+    end
   end
 
   describe '#feed' do
@@ -507,7 +584,7 @@ describe TopicsController do
       end
 
       it 'requires an email parameter' do
-        lambda { xhr :post, :invite, topic_id: @topic.id }.should raise_error(Discourse::InvalidParameters)
+        lambda { xhr :post, :invite, topic_id: @topic.id }.should raise_error(ActionController::ParameterMissing)
       end
 
       describe 'without permission' do
@@ -583,17 +660,12 @@ describe TopicsController do
       end
 
       it "can set a topic's auto close time" do
-        Topic.any_instance.expects(:auto_close_days=).with { |arg| arg.to_i == 3 }
+        Topic.any_instance.expects(:set_auto_close).with("3", @admin)
         xhr :put, :autoclose, topic_id: @topic.id, auto_close_days: 3
       end
 
       it "can remove a topic's auto close time" do
-        Topic.any_instance.expects(:auto_close_days=).with(nil)
-        xhr :put, :autoclose, topic_id: @topic.id, auto_close_days: nil
-      end
-
-      it "sets the topic closer to the current user" do
-        Topic.any_instance.expects(:auto_close_user=).with(@admin)
+        Topic.any_instance.expects(:set_auto_close).with(nil, anything)
         xhr :put, :autoclose, topic_id: @topic.id, auto_close_days: nil
       end
     end

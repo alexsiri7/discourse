@@ -2,6 +2,9 @@ require 'cache'
 
 module Discourse
 
+  # Expected less matches than what we got in a find
+  class TooManyMatches < Exception; end
+
   # When they try to do something they should be logged in for
   class NotLoggedIn < Exception; end
 
@@ -13,6 +16,9 @@ module Discourse
 
   # When something they want is not found
   class NotFound < Exception; end
+
+  # When a setting is missing
+  class SiteSettingMissing < Exception; end
 
   def self.cache
     @cache ||= Cache.new

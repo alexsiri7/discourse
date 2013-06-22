@@ -10,10 +10,6 @@ describe PostCreator do
 
   let(:user) { Fabricate(:user) }
 
-  it 'raises an error without a raw value' do
-    lambda { PostCreator.new(user, {}) }.should raise_error(Discourse::InvalidParameters)
-  end
-
   context 'new topic' do
     let(:category) { Fabricate(:category, user: user) }
     let(:topic) { Fabricate(:topic, user: user) }
@@ -30,6 +26,18 @@ describe PostCreator do
       lambda { creator.create }.should raise_error(Discourse::InvalidAccess)
     end
 
+
+    context "invalid title" do
+
+      let(:creator_invalid_title) { PostCreator.new(user, basic_topic_params.merge(title: 'a')) }
+
+      it "has errors" do
+        creator_invalid_title.create
+        expect(creator_invalid_title.errors).to be_present
+      end
+
+    end
+
     context 'success' do
 
       it "doesn't return true for spam" do
@@ -37,7 +45,7 @@ describe PostCreator do
         creator.spam?.should be_false
       end
 
-      pending 'generates the correct messages for a secure topic' do
+      it 'generates the correct messages for a secure topic' do
 
         admin = Fabricate(:admin)
 
@@ -57,17 +65,19 @@ describe PostCreator do
         topic_id = created_post.topic_id
 
 
-        messages.map{|m| m.channel}.sort.should == [ "/latest",
+        messages.map{|m| m.channel}.sort.should == [ "/new",
                                                      "/users/#{admin.username}",
                                                      "/users/#{admin.username}",
-                                                     "/topic/#{created_post.topic_id}",
-                                                     "/category/#{cat.slug}"
+                                                     "/unread/#{admin.id}",
+                                                     "/unread/#{admin.id}",
+                                                     "/topic/#{created_post.topic_id}"
                                                    ].sort
         admin_ids = [Group[:admins].id]
-        messages.any?{|m| m.group_ids != admin_ids}.should be_false
+
+        messages.any?{|m| m.group_ids != admin_ids && m.user_ids != [admin.id]}.should be_false
       end
 
-      pending 'generates the correct messages for a normal topic' do
+      it 'generates the correct messages for a normal topic' do
 
         p = nil
         messages = MessageBus.track_publish do
@@ -75,13 +85,16 @@ describe PostCreator do
           topic_id = p.topic_id
         end
 
-        latest = messages.find{|m| m.channel == "/latest"}
+        latest = messages.find{|m| m.channel == "/new"}
         latest.should_not be_nil
+
+        read = messages.find{|m| m.channel == "/unread/#{p.user_id}"}
+        read.should_not be_nil
 
         user_action = messages.find{|m| m.channel == "/users/#{p.user.username}"}
         user_action.should_not be_nil
 
-        messages.length.should == 2
+        messages.length.should == 3
       end
 
       it 'extracts links from the post' do
@@ -203,9 +216,17 @@ describe PostCreator do
     end
 
     it "does not create the post" do
+      GroupMessage.stubs(:create)
       creator.create
       creator.errors.should be_present
       creator.spam?.should be_true
+    end
+
+    it "sends a message to moderators" do
+      GroupMessage.expects(:create).with do |group_name, msg_type, params|
+        group_name == Group[:moderators].name and msg_type == :spam_post_blocked and params[:user].id == user.id
+      end
+      creator.create
     end
 
   end
@@ -230,6 +251,20 @@ describe PostCreator do
 
     end
 
+  end
+
+  context "cooking options" do
+    let(:raw) { "this is my awesome message body hello world" }
+
+    it "passes the cooking options through correctly" do
+      creator = PostCreator.new(user,
+                                title: 'hi there welcome to my topic',
+                                raw: raw,
+                                cooking_options: { traditional_markdown_linebreaks: true })
+
+      Post.any_instance.expects(:cook).with(raw, has_key(:traditional_markdown_linebreaks)).returns(raw)
+      creator.create
+    end
   end
 
   # integration test ... minimise db work

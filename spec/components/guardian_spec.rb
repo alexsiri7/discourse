@@ -7,7 +7,7 @@ describe Guardian do
   let(:user) { build(:user) }
   let(:moderator) { build(:moderator) }
   let(:admin) { build(:admin) }
-  let(:another_admin) { build(:another_admin) }
+  let(:another_admin) { build(:admin) }
   let(:coding_horror) { build(:coding_horror) }
 
   let(:topic) { build(:topic, user: user) }
@@ -190,9 +190,14 @@ describe Guardian do
       Guardian.new(user).can_invite_to?(topic).should be_false
     end
 
-    it 'returns false when the site requires approving users' do
+    it 'returns true when the site requires approving users and is mod' do
       SiteSetting.expects(:must_approve_users?).returns(true)
-      Guardian.new(moderator).can_invite_to?(topic).should be_false
+      Guardian.new(moderator).can_invite_to?(topic).should be_true
+    end
+
+    it 'returns true when the site requires approving users and is regular' do
+      SiteSetting.expects(:must_approve_users?).returns(true)
+      Guardian.new(coding_horror).can_invite_to?(topic).should be_false
     end
 
   end

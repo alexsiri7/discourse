@@ -2,11 +2,6 @@ require 'spec_helper'
 require_dependency 'post_destroyer'
 
 describe PostAction do
-
-  before do
-    ImageSorcery.any_instance.stubs(:convert).returns(false)
-  end
-
   it { should belong_to :user }
   it { should belong_to :post }
   it { should belong_to :post_action_type }
@@ -87,6 +82,20 @@ describe PostAction do
       PostAction.act(codinghorror, post, PostActionType.types[:off_topic])
       post.topic.trash!
       PostAction.flagged_posts_count.should == 0
+    end
+
+    it "should ignore validated flags" do
+      admin = Fabricate(:admin)
+      PostAction.act(codinghorror, post, PostActionType.types[:off_topic])
+      post.hidden.should be_false
+      PostAction.defer_flags!(post, admin.id)
+      PostAction.flagged_posts_count.should == 0
+      post.reload
+      post.hidden.should be_false
+
+      PostAction.hide_post!(post)
+      post.reload
+      post.hidden.should be_true
     end
 
   end
@@ -225,7 +234,7 @@ describe PostAction do
       u2 = Fabricate(:walter_white)
       admin = Fabricate(:admin) # we need an admin for the messages
 
-      SiteSetting.flags_required_to_hide_post = 2
+      SiteSetting.stubs(:flags_required_to_hide_post).returns(2)
 
       PostAction.act(u1, post, PostActionType.types[:spam])
       PostAction.act(u2, post, PostActionType.types[:spam])
